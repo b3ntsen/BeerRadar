@@ -133,7 +133,7 @@ export default function Home() {
         <aside
           className={`${
             sidebarTab === "list" ? "flex" : "hidden"
-          } sm:flex flex-col w-full sm:w-80 lg:w-96 bg-gray-50 border-r border-gray-200 overflow-y-auto`}
+          } sm:flex flex-col w-full sm:w-80 lg:w-96 bg-gray-50 border-r border-gray-200 overflow-hidden`}
         >
           {selectedVenue ? (
             <VenuePanel

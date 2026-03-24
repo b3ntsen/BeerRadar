@@ -21,7 +21,7 @@ export default function VenueList({ venues, selectedId, onSelect }: Props) {
   }
 
   return (
-    <div className="space-y-2 p-3">
+    <div className="space-y-2 p-3 overflow-y-auto h-full">
       {venues.map((venue) => (
         <button
           key={venue.id}
