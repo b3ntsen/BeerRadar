@@ -83,7 +83,7 @@ export default function Home() {
             type="text"
             placeholder="Søk etter bar, by eller øl..."
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); if (e.target.value) setSidebarTab("list"); }}
             className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-400"
           />
         </div>
