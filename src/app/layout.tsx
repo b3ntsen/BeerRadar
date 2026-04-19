@@ -1,9 +1,17 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { CartProvider } from "@/components/kiosk/CartContext";
 
 export const metadata: Metadata = {
-  title: "BeerRadar – Finn billigste øl",
-  description: "Kart over barer og utesteder med billigst øl i nærheten",
+  title: "Elektro 4 Kiosk",
+  description: "Selvbetjeningskiosk – brus, energidrikk, snacks",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#e63946",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -12,8 +20,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="no" className="h-full antialiased">
-      <body className="h-full overflow-hidden">{children}</body>
+    <html lang="no" className="h-full">
+      <body className="h-full bg-gray-50">
+        <CartProvider>{children}</CartProvider>
+      </body>
     </html>
   );
 }

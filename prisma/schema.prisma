@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Product {
+  id                Int          @id @default(autoincrement())
+  name              String
+  description       String?
+  price             Float
+  category          String
+  imageUrl          String?
+  stockQuantity     Int          @default(0)
+  lowStockThreshold Int          @default(5)
+  isActive          Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  orderItems        OrderItem[]
+}
+
+model Order {
+  id              Int         @id @default(autoincrement())
+  status          String      @default("PENDING")
+  total           Float
+  vippsOrderId    String?     @unique
+  vippsReference  String?
+  customerNote    String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  items           OrderItem[]
+}
+
+model OrderItem {
+  id           Int     @id @default(autoincrement())
+  orderId      Int
+  productId    Int
+  quantity     Int
+  priceAtTime  Float
+  order        Order   @relation(fields: [orderId], references: [id])
+  product      Product @relation(fields: [productId], references: [id])
+}
+
+model AdminUser {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
