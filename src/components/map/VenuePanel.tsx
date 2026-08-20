@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { VenueWithCheapest } from "@/types";
 import { formatNok, getBeerName, venueTypeLabel } from "@/lib/utils";
-import { X, Clock, MapPin, Plus, Beer, ChevronUp, ChevronDown } from "lucide-react";
+import { X, Clock, MapPin, Plus, Beer, ChevronUp, ChevronDown, Camera, Image as ImageIcon } from "lucide-react";
 import { beers } from "@/lib/data/beers";
-import { UserPrice } from "@/lib/userPrices";
+import { UserPrice, compressImage } from "@/lib/userPrices";
 
 interface Props {
   venue: VenueWithCheapest;
   userPrices: UserPrice[];
   onClose: () => void;
-  onAddPrice: (beerId: string, priceNok: number, sizeML: number) => void;
+  onAddPrice: (beerId: string, priceNok: number, sizeML: number, photoBase64?: string) => void;
 }
 
 export default function VenuePanel({ venue, userPrices, onClose, onAddPrice }: Props) {
@@ -19,14 +19,24 @@ export default function VenuePanel({ venue, userPrices, onClose, onAddPrice }: P
   const [beerId, setBeerId] = useState(beers[0].id);
   const [price, setPrice] = useState("");
   const [size, setSize] = useState("500");
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [expandedPhoto, setExpandedPhoto] = useState<string | null>(null);
+
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const compressed = await compressImage(file);
+    setPhoto(compressed);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const p = parseFloat(price);
     const s = parseInt(size);
     if (!p || !s || p <= 0) return;
-    onAddPrice(beerId, p, s);
+    onAddPrice(beerId, p, s, photo ?? undefined);
     setPrice("");
+    setPhoto(null);
     setShowForm(false);
   };
 
@@ -48,11 +58,22 @@ export default function VenuePanel({ venue, userPrices, onClose, onAddPrice }: P
         pricePerLiter: (up.priceNok / up.sizeML) * 1000,
         isUserSubmitted: true,
         name: getBeerName(up.beerId),
+        photoBase64: up.photoBase64,
       })),
   ].sort((a, b) => a.priceNok - b.priceNok);
 
   return (
     <div className="flex flex-col h-full bg-white rounded-xl shadow-xl overflow-hidden">
+      {/* Fullscreen photo viewer */}
+      {expandedPhoto && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+          onClick={() => setExpandedPhoto(null)}
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={expandedPhoto} alt="Ølbilde" className="max-w-full max-h-full object-contain rounded-lg" />
+        </div>
+      )}
       {/* Header */}
       <div className="bg-amber-400 px-4 py-3 flex items-start justify-between">
         <div>
@@ -106,22 +127,36 @@ export default function VenuePanel({ venue, userPrices, onClose, onAddPrice }: P
         {allPrices.map((bp, i) => (
           <div
             key={`${bp.beerId}-${i}`}
-            className={`flex items-center justify-between py-2 px-3 rounded-lg ${
+            className={`py-2 px-3 rounded-lg ${
               i === 0 ? "bg-amber-50 border border-amber-200" : "bg-gray-50"
             }`}
           >
-            <div>
-              <p className="text-sm font-medium text-gray-800">{bp.name}</p>
-              <p className="text-xs text-gray-500">
-                {bp.sizeML}ml · {bp.pricePerLiter.toFixed(0)} kr/L
-                {bp.isUserSubmitted && (
-                  <span className="ml-1 text-blue-500 font-medium">· Innmeldt</span>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-800">{bp.name}</p>
+                <p className="text-xs text-gray-500">
+                  {bp.sizeML}ml · {bp.pricePerLiter.toFixed(0)} kr/L
+                  {bp.isUserSubmitted && (
+                    <span className="ml-1 text-blue-500 font-medium">· Innmeldt</span>
+                  )}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {"photoBase64" in bp && typeof bp.photoBase64 === "string" && (
+                  <button onClick={() => setExpandedPhoto(bp.photoBase64 as string)}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={bp.photoBase64 as string}
+                      alt="Ølbilde"
+                      className="w-10 h-10 object-cover rounded-lg border border-gray-200 hover:opacity-80 transition-opacity"
+                    />
+                  </button>
                 )}
-              </p>
+                <span className={`font-bold text-base ${i === 0 ? "text-amber-600" : "text-gray-700"}`}>
+                  {formatNok(bp.priceNok)}
+                </span>
+              </div>
             </div>
-            <span className={`font-bold text-base ${i === 0 ? "text-amber-600" : "text-gray-700"}`}>
-              {formatNok(bp.priceNok)}
-            </span>
           </div>
         ))}
       </div>
@@ -175,6 +210,30 @@ export default function VenuePanel({ venue, userPrices, onClose, onAddPrice }: P
                 </select>
               </div>
             </div>
+            {/* Photo upload */}
+            <label className="flex items-center gap-2 cursor-pointer">
+              <div className={`flex-1 flex items-center gap-2 border rounded-lg px-3 py-2 text-sm transition-colors ${photo ? "border-green-400 bg-green-50" : "border-gray-300 hover:border-amber-400"}`}>
+                {photo ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={photo} alt="Preview" className="w-8 h-8 object-cover rounded" />
+                    <span className="text-green-700 text-xs font-medium">Bilde valgt</span>
+                  </>
+                ) : (
+                  <>
+                    <Camera size={16} className="text-gray-400" />
+                    <span className="text-gray-500">Ta bilde av glasset (valgfritt)</span>
+                  </>
+                )}
+              </div>
+              {photo && (
+                <button type="button" onClick={() => setPhoto(null)} className="text-gray-400 hover:text-red-500 p-1">
+                  <X size={16} />
+                </button>
+              )}
+              <input type="file" accept="image/*" capture="environment" onChange={handlePhoto} className="hidden" />
+            </label>
+
             <button
               type="submit"
               className="w-full py-2 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg text-sm transition-colors"

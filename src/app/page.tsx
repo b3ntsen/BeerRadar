@@ -60,9 +60,9 @@ export default function Home() {
 
   const selectedVenue = filteredVenues.find((v) => v.id === selectedId) ?? null;
 
-  const handleAddPrice = (beerId: string, priceNok: number, sizeML: number) => {
+  const handleAddPrice = (beerId: string, priceNok: number, sizeML: number, photoBase64?: string) => {
     if (!selectedId) return;
-    const updated = saveUserPrice(selectedId, beerId, priceNok, sizeML);
+    const updated = saveUserPrice(selectedId, beerId, priceNok, sizeML, photoBase64);
     setUserPrices(updated);
   };
 
